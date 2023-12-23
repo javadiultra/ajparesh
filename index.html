@@ -1,0 +1,183 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #000; /* Black background color */
+            color: #FFF; /* White text color */
+        }
+
+        canvas {
+            display: block;
+            border: 1px solid #FFF; /* White border for the canvas */
+        }
+
+        button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            padding: 10px 20px;
+            background-color: #FFF;
+            border: none;
+            cursor: pointer;
+        }
+
+        #gameOverMessage {
+            text-align: center;
+            font-size: 24px;
+            position: absolute;
+            top: 70%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="pingPongCanvas" width="400" height="600"></canvas>
+<button id="startButton">شروع</button>
+<div id="gameOverMessage" style="display: none;"></div>
+
+<script>
+    const canvas = document.getElementById("pingPongCanvas");
+    const ctx = canvas.getContext("2d");
+    const startButton = document.getElementById("startButton");
+    const gameOverMessage = document.getElementById("gameOverMessage");
+
+    // Paddle dimensions
+    const paddleWidth = 10;
+    const paddleHeight = 80;
+    let paddle1Y = canvas.height / 2 - paddleHeight / 2;
+    let paddle2Y = canvas.height / 2 - paddleHeight / 2;
+
+    // Ball details
+    let ballSize = 20;
+    let ballX = canvas.width / 2;
+    let ballY = canvas.height / 2;
+    let ballSpeedX = 0; // Initial ball speed set to 0
+    let ballSpeedY = 0; // Initial ball speed set to 0
+
+    // Right paddle speed and sensitivity
+    const paddle2Speed = 12; // Decreased paddle speed
+    const paddle2Sensitivity = 0.2; // Decreased sensitivity
+
+    // Flag to check if the game has started
+    let gameStarted = false;
+
+    // Update game state
+    function update() {
+        if (gameStarted) {
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            // Ball collisions with top and bottom walls
+            if (ballY < 0 || ballY > canvas.height) {
+                ballSpeedY = -ballSpeedY;
+            }
+
+            // Ball collisions with paddles
+            if (ballX < paddleWidth && ballY > paddle1Y && ballY < paddle1Y + paddleHeight) {
+                ballSpeedX = -ballSpeedX;
+            }
+
+            if (ballX > canvas.width - paddleWidth && ballY > paddle2Y && ballY < paddle2Y + paddleHeight) {
+                ballSpeedX = -ballSpeedX;
+            }
+
+            // Move right paddle automatically with decreased sensitivity
+            if (ballX > canvas.width / 2) {
+                const paddle2CenterY = paddle2Y + paddleHeight / 2;
+                if (paddle2CenterY < ballY - paddle2Sensitivity * paddleHeight) {
+                    paddle2Y += paddle2Speed;
+                } else if (paddle2CenterY > ballY + paddle2Sensitivity * paddleHeight) {
+                    paddle2Y -= paddle2Speed;
+                }
+            }
+
+            // Drawing paddles and ball
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#FFF"; // White color for paddles and ball
+            ctx.fillRect(0, paddle1Y, paddleWidth, paddleHeight); // Left paddle
+            ctx.fillRect(canvas.width - paddleWidth, paddle2Y, paddleWidth, paddleHeight); // Right paddle
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballSize / 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Check for loss
+            if (ballX < 0) {
+                gameOver("آقا رضا مرد و سلاخی شد!");
+            }
+
+            // Recursive call to update the game state
+            requestAnimationFrame(update);
+        }
+    }
+
+    // Handle touch events to move the left paddle
+    canvas.addEventListener("touchmove", (event) => {
+        event.preventDefault();
+        const touchY = event.touches[0].clientY - canvas.getBoundingClientRect().top;
+        paddle1Y = touchY - paddleHeight / 2;
+    });
+
+    // Handle click on the start button
+    startButton.addEventListener("click", () => {
+        if (!gameStarted) {
+            startGame();
+        }
+    });
+
+    // Function to start the game
+    function startGame() {
+        // Reset ball position to the center
+        ballX = canvas.width / 2;
+        ballY = canvas.height / 2;
+
+        // Set initial ball speed
+        ballSpeedX = 5;
+        ballSpeedY = 3;
+
+        // Set the game flag to true
+        gameStarted = true;
+
+        // Hide the start button after starting the game
+        startButton.style.display = "none";
+
+        // Hide the game over message
+        gameOverMessage.style.display = "none";
+
+        // Initial call to start the game loop
+        update();
+    }
+
+    // Game over function
+    function gameOver(message) {
+        // Display the game over message
+        gameOverMessage.innerHTML = message;
+
+        // Set game flag to false
+        gameStarted = false;
+
+        // Display the start button after the game is over
+        startButton.style.display = "block";
+
+        // Display the game over message
+        gameOverMessage.style.display = "block";
+    }
+</script>
+
+</body>
+</html>
